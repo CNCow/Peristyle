@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Launcher",
+  "version": "1.3",
+  "description": "Replaces the new tab page with your personal site launcher.",
+  "chrome_url_overrides": { "newtab": "launcher.html" },
+  "web_accessible_resources": [
+    {
+      "resources": ["config.json", "images/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "permissions": [
+     "storage"
+  ],
+  "host_permissions": [
+    "https://www.bing.com/"
+  ]
+}
