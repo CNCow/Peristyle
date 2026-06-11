@@ -36,10 +36,6 @@ const DEFAULTS = {
 };
 
 // ── State ─────────────────────────────────────────────────────────────────
-// Startup priority: 1) localStorage  2) config.json  3) built-in defaults
-// Changes save to localStorage automatically.
-// 💾 downloads config.json for backup or setting up a new machine.
-
 let state = JSON.parse(JSON.stringify(DEFAULTS));
 
 function applyDefaults(s) {
@@ -49,10 +45,116 @@ function applyDefaults(s) {
   if (s.pinnedBgs === undefined) s.pinnedBgs = [];
   if (s.tutorialSeen === undefined) s.tutorialSeen = false;
   if (s.theme === undefined) s.theme = JSON.parse(JSON.stringify(DEFAULTS.theme));
-  // Fill in any missing theme keys (for upgrades from older configs)
   const dt = DEFAULTS.theme;
   Object.keys(dt).forEach(k => { if (s.theme[k] === undefined) s.theme[k] = dt[k]; });
   return s;
+}
+
+// ── Update Checker ─────────────────────────────────────────────────────────
+const GITHUB_MANIFEST_URL = 'https://raw.githubusercontent.com/CNCow/Launcher/main/manifest.json';
+const GITHUB_ZIP_URL      = 'https://github.com/CNCow/Launcher/archive/refs/heads/main.zip';
+const GITHUB_REPO_URL     = 'https://github.com/CNCow/Launcher';
+
+let updateCheckResult = null; // { currentVersion, latestVersion, hasUpdate, error, checking }
+
+function getCurrentVersion() {
+  try {
+    return chrome.runtime.getManifest().version;
+  } catch(e) {
+    return '0.0';
+  }
+}
+
+function compareVersions(a, b) {
+  const pa = String(a).split('.').map(Number);
+  const pb = String(b).split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const na = pa[i] || 0, nb = pb[i] || 0;
+    if (na > nb) return 1;
+    if (na < nb) return -1;
+  }
+  return 0;
+}
+
+async function checkForUpdates(manual = false) {
+  const currentVersion = getCurrentVersion();
+
+  // Show checking state in the panel if it's open
+  updateCheckResult = { currentVersion, latestVersion: null, hasUpdate: false, checking: true, error: null };
+  if (manual) refreshUpdatePanel();
+
+  try {
+    const res = await fetch(GITHUB_MANIFEST_URL + '?_=' + Date.now());
+    if (!res.ok) throw new Error('Could not reach GitHub');
+    const data = await res.json();
+    const latestVersion = data.version;
+    const hasUpdate = compareVersions(latestVersion, currentVersion) > 0;
+
+    updateCheckResult = { currentVersion, latestVersion, hasUpdate, checking: false, error: null };
+
+    // Show or hide the badge on the settings button
+    const badge = $('update-badge');
+    if (badge) badge.style.display = hasUpdate ? 'block' : 'none';
+
+    refreshUpdatePanel();
+  } catch(e) {
+    updateCheckResult = { currentVersion, latestVersion: null, hasUpdate: false, checking: false, error: 'Could not reach GitHub — check your connection.' };
+    refreshUpdatePanel();
+  }
+}
+
+function refreshUpdatePanel() {
+  const currentEl  = $('update-current-version');
+  const latestEl   = $('update-latest-version');
+  const statusEl   = $('update-status');
+  const downloadBtn = $('btn-download-update');
+  const checkBtn   = $('btn-check-updates');
+
+  if (!statusEl) return; // panel not in DOM yet
+
+  const r = updateCheckResult;
+
+  if (!r) {
+    if (currentEl)  currentEl.textContent  = getCurrentVersion();
+    if (latestEl)   latestEl.textContent   = '—';
+    statusEl.textContent = 'Not checked yet.';
+    statusEl.className   = 'update-status-msg';
+    if (downloadBtn) downloadBtn.style.display = 'none';
+    return;
+  }
+
+  if (currentEl) currentEl.textContent = r.currentVersion;
+
+  if (r.checking) {
+    if (latestEl)    latestEl.textContent = '…';
+    statusEl.textContent = 'Checking for updates…';
+    statusEl.className   = 'update-status-msg';
+    if (downloadBtn) downloadBtn.style.display = 'none';
+    if (checkBtn)    checkBtn.disabled = true;
+    return;
+  }
+
+  if (checkBtn) checkBtn.disabled = false;
+
+  if (r.error) {
+    if (latestEl)    latestEl.textContent = '—';
+    statusEl.textContent = r.error;
+    statusEl.className   = 'update-status-msg error';
+    if (downloadBtn) downloadBtn.style.display = 'none';
+    return;
+  }
+
+  if (latestEl) latestEl.textContent = r.latestVersion;
+
+  if (r.hasUpdate) {
+    statusEl.innerHTML = 'Update available — v' + r.latestVersion + ' is ready to download.';
+    statusEl.className = 'update-status-msg available';
+    if (downloadBtn) downloadBtn.style.display = 'flex';
+  } else {
+    statusEl.textContent = 'You\'re up to date.';
+    statusEl.className   = 'update-status-msg ok';
+    if (downloadBtn) downloadBtn.style.display = 'none';
+  }
 }
 
 // ── Theme Engine ───────────────────────────────────────────────────────────
@@ -68,12 +170,12 @@ const COLOR_THEMES = {
 };
 
 const FONT_PAIRINGS = {
-  default:    { name: 'DM Sans + DM Serif',   body: "'DM Sans', sans-serif",          display: "'DM Serif Display', serif",   url: 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap' },
-  editorial:  { name: 'Playfair + Source Sans', body: "'Source Sans 3', sans-serif",  display: "'Playfair Display', serif",   url: 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@300;400;600&display=swap' },
-  modern:     { name: 'Outfit + Fraunces',    body: "'Outfit', sans-serif",            display: "'Fraunces', serif",           url: 'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,700&family=Outfit:wght@300;400;500;600&display=swap' },
-  techno:     { name: 'Space Grotesk + Syne', body: "'Space Grotesk', sans-serif",    display: "'Syne', sans-serif",          url: 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=Syne:wght@700;800&display=swap' },
-  elegant:    { name: 'Cormorant + Jost',     body: "'Jost', sans-serif",             display: "'Cormorant Garamond', serif", url: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Jost:wght@300;400;500&display=swap' },
-  mono:       { name: 'Geist Mono',           body: "'Geist Mono', monospace",        display: "'Geist Mono', monospace",     url: 'https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600&display=swap' },
+  default:    { name: 'DM Sans + DM Serif',     body: "'DM Sans', sans-serif",          display: "'DM Serif Display', serif",   url: 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap' },
+  editorial:  { name: 'Playfair + Source Sans', body: "'Source Sans 3', sans-serif",    display: "'Playfair Display', serif",   url: 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@300;400;600&display=swap' },
+  modern:     { name: 'Outfit + Fraunces',      body: "'Outfit', sans-serif",           display: "'Fraunces', serif",           url: 'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,700&family=Outfit:wght@300;400;500;600&display=swap' },
+  techno:     { name: 'Space Grotesk + Syne',   body: "'Space Grotesk', sans-serif",   display: "'Syne', sans-serif",          url: 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=Syne:wght@700;800&display=swap' },
+  elegant:    { name: 'Cormorant + Jost',       body: "'Jost', sans-serif",             display: "'Cormorant Garamond', serif", url: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Jost:wght@300;400;500&display=swap' },
+  mono:       { name: 'Geist Mono',             body: "'Geist Mono', monospace",        display: "'Geist Mono', monospace",     url: 'https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600&display=swap' },
 };
 
 const ICON_SIZES = {
@@ -92,12 +194,10 @@ function applyTheme() {
   const pairing = FONT_PAIRINGS[t.fontPairing] || FONT_PAIRINGS.default;
   const sizes = ICON_SIZES[t.iconSize] || ICON_SIZES.medium;
 
-  // Accent — user override wins, else theme default
   const accent = t.accentColor || theme.accent;
   const accentRgb = hexToRgb(accent);
   const accentDim = accentRgb ? `rgba(${accentRgb},0.18)` : 'rgba(124,158,240,0.18)';
 
-  // Surface uses theme surface tint + user opacity
   const opacity = (parseInt(t.tileOpacity) || 6) / 100;
   const blur = parseInt(t.tileBlur) || 12;
 
@@ -110,12 +210,9 @@ function applyTheme() {
   root.style.setProperty('--tile-h', sizes.tileH);
   root.style.setProperty('--icon-size', sizes.iconSize);
 
-  // Overlay tint on bg
   const bgEl = $('bg');
   if (bgEl) {
-    const after = bgEl.querySelector('::after'); // won't work directly; use data-attr approach
     bgEl.dataset.overlayColor = theme.bg;
-    // Inject a dynamic style for the pseudo-element
     let styleEl = document.getElementById('dynamic-theme-style');
     if (!styleEl) { styleEl = document.createElement('style'); styleEl.id = 'dynamic-theme-style'; document.head.appendChild(styleEl); }
     styleEl.textContent = `
@@ -127,10 +224,8 @@ function applyTheme() {
       ${t.clockFont === 'mono' ? '#clock { font-family: "Geist Mono", monospace !important; letter-spacing: 0.08em !important; }' : ''}
     `;
 
-    // Load font if needed
     if (pairing.url && pairing.url !== _loadedFontUrl) {
       _loadedFontUrl = pairing.url;
-      // Remove old dynamic font links
       document.querySelectorAll('link[data-dynamic-font]').forEach(l => l.remove());
       const link = document.createElement('link');
       link.rel = 'stylesheet'; link.href = pairing.url; link.dataset.dynamicFont = '1';
@@ -147,36 +242,29 @@ function hexToRgb(hex) {
   return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : null;
 }
 
-// Populate theme UI controls from state
 function syncThemeUI() {
   const t = state.theme || DEFAULTS.theme;
 
-  // Color theme buttons
   document.querySelectorAll('.color-theme-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.theme === t.colorTheme);
   });
 
-  // Font pairing select
   const fontSel = $('font-pairing-select');
   if (fontSel) fontSel.value = t.fontPairing || 'default';
 
-  // Icon size buttons
   document.querySelectorAll('.icon-size-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.size === t.iconSize);
   });
 
-  // Clock font buttons
   document.querySelectorAll('.clock-font-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.clockfont === t.clockFont);
   });
 
-  // Sliders
   const opSlider = $('slider-tile-opacity');
   if (opSlider) { opSlider.value = t.tileOpacity; $('val-tile-opacity').textContent = t.tileOpacity + '%'; }
   const blurSlider = $('slider-tile-blur');
   if (blurSlider) { blurSlider.value = t.tileBlur; $('val-tile-blur').textContent = t.tileBlur + 'px'; }
 
-  // Accent colour
   const accentInput = $('accent-color-input');
   if (accentInput) accentInput.value = t.accentColor || COLOR_THEMES[t.colorTheme]?.accent || '#7c9ef0';
 }
@@ -239,7 +327,6 @@ let tutorialActive = false;
 function startTutorial() {
   tutorialStep = 0;
   tutorialActive = true;
-  // Make sure edit mode is off so highlighted elements are in normal state
   if (editMode) toggleEdit();
   showTutorialStep();
 }
@@ -255,13 +342,11 @@ function showTutorialStep() {
   const isFirst = tutorialStep === 0;
   const isLast = tutorialStep === total - 1;
 
-  // Update progress pips
   const pips = $('tutorial-pips');
   pips.innerHTML = TUTORIAL_STEPS.map((_, i) =>
     `<div class="tut-pip${i === tutorialStep ? ' active' : ''}"></div>`
   ).join('');
 
-  // Update text
   $('tutorial-title').innerHTML = step.title;
   $('tutorial-body').innerHTML = step.body;
   $('tutorial-next').textContent = isLast ? 'Done' : 'Next →';
@@ -271,7 +356,6 @@ function showTutorialStep() {
   overlay.classList.add('visible');
 
   if (!step.target) {
-    // Centred card, no spotlight
     spotlight.style.display = 'none';
     positionCard(card, null, 'center');
     return;
@@ -284,7 +368,6 @@ function showTutorialStep() {
     return;
   }
 
-  // Scroll element into view then position
   el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   requestAnimationFrame(() => {
     const rect = el.getBoundingClientRect();
@@ -303,7 +386,6 @@ function showTutorialStep() {
 function positionCard(card, rect, position) {
   const margin = 18;
   const cardW = 320;
-  // Reset
   card.style.left = ''; card.style.right = ''; card.style.top = ''; card.style.bottom = ''; card.style.transform = '';
 
   if (position === 'center' || !rect) {
@@ -313,7 +395,6 @@ function positionCard(card, rect, position) {
     return;
   }
 
-  // Horizontal: centre on element, clamp to viewport
   const elCentreX = rect.left + rect.width / 2;
   let cardLeft = elCentreX - cardW / 2;
   cardLeft = Math.max(margin, Math.min(cardLeft, window.innerWidth - cardW - margin));
@@ -322,7 +403,6 @@ function positionCard(card, rect, position) {
   if (position === 'bottom') {
     card.style.top = (rect.bottom + margin) + 'px';
   } else {
-    // top
     card.style.bottom = (window.innerHeight - rect.top + margin) + 'px';
   }
 }
@@ -347,7 +427,6 @@ function endTutorial(completed) {
   if (completed) {
     state.tutorialSeen = true;
     persist();
-    // Sync the toggle in settings if it's open
     const tog = $('toggle-tutorial');
     if (tog) tog.checked = false;
   }
@@ -355,58 +434,37 @@ function endTutorial(completed) {
 
 function maybeStartTutorial() {
   if (!state.tutorialSeen) {
-    // Small delay so the page finishes rendering first
     setTimeout(startTutorial, 600);
   }
 }
 
-// ── Layout: keep #groups below the fixed clock/weather block ──────────────
+// ── Layout ─────────────────────────────────────────────────────────────────
 function adjustGroupsOffset() {
   const block = $('clock-weather-block');
   const groups = $('groups');
   if (!block || !groups) return;
   const blockBottom = block.getBoundingClientRect().bottom;
   const appTop = $('app').getBoundingClientRect().top;
-  const gap = 8; // px breathing room below the block
+  const gap = 8;
   groups.style.marginTop = Math.max(blockBottom - appTop + gap, 20) + 'px';
 }
 
-// Save to localStorage — called after every change
 function persist() {
   localStorage.setItem('launcher_config', JSON.stringify(state));
 }
 
-// Download config.json — for backup / new machine setup
-/*function saveConfig() {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'config.json'; a.click();
-  URL.revokeObjectURL(url);
-  const btn = $('btn-save-config');
-  const orig = btn.textContent;
-  btn.textContent = '✓';
-  setTimeout(() => btn.textContent = orig, 1500);
-}*/
 function saveConfig() {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = 'config.json'; a.click();
   URL.revokeObjectURL(url);
-  
-  // Find the internal material icon span element
+
   const btn = $('btn-save-config');
   const iconSpan = btn.querySelector('.material-symbols-rounded');
-  
   if (iconSpan) {
-    // Swap the text ligature from 'download' to 'check'
     iconSpan.textContent = 'check';
-    
-    // Smoothly snap it back to 'download' after 1.5 seconds
-    setTimeout(() => {
-      iconSpan.textContent = 'download';
-    }, 1500);
+    setTimeout(() => { iconSpan.textContent = 'download'; }, 1500);
   }
 }
 
@@ -420,14 +478,12 @@ function importConfig(file) {
       persist();
       render();
       applyWeatherVisibility();
-      // Brief feedback on import button
       const btn = $('btn-import-config');
       const iconSpan = btn.querySelector('.material-symbols-rounded');
       if (iconSpan) {
         iconSpan.textContent = 'check';
         setTimeout(() => iconSpan.textContent = 'upload', 1500);
       }
-      // Refresh pinned bgs shelf if settings modal happens to be open
       renderPinnedBgs();
     } catch(err) {
       alert('Could not read config.json — make sure it is a valid Launcher config file.');
@@ -436,12 +492,7 @@ function importConfig(file) {
   reader.readAsText(file);
 }
 
-// Load on startup:
-//   1. localStorage (instant, always up to date)
-//   2. config.json  (first run on a new machine)
-//   3. built-in defaults
 async function loadConfig() {
-  // 1. Try localStorage first
   try {
     const cached = localStorage.getItem('launcher_config');
     if (cached) {
@@ -450,7 +501,6 @@ async function loadConfig() {
     }
   } catch(e) {}
 
-  // 2. Try config.json (new machine, or localStorage was cleared)
   try {
     const configUrl = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL)
       ? chrome.runtime.getURL('config.json') + '?_=' + Date.now()
@@ -459,17 +509,13 @@ async function loadConfig() {
     if (!res.ok) throw new Error('not found');
     const loaded = await res.json();
     state = applyDefaults(loaded);
-    persist(); // seed localStorage from config.json
+    persist();
     return;
   } catch(e) {}
 
-  // 3. Fall back to built-in defaults
   state = applyDefaults(JSON.parse(JSON.stringify(DEFAULTS)));
   persist();
 }
-
-
-
 
 // ── Forecast popup ─────────────────────────────────────────────────────────
 let lastDailyData = null;
@@ -480,13 +526,12 @@ const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 function buildForecastPopup(d) {
   const popup = $('forecast-popup');
   if (!d) { popup.innerHTML = ''; return; }
-  const today = new Date().getDay();
   popup.innerHTML = '';
 
   for (let i = 0; i < 7; i++) {
     const date = new Date(d.time[i]);
     const dayName = i === 0 ? 'Today' : DAY_NAMES[date.getDay()];
-    const icon = materialIcon(weatherIcon(d.weather_code[i], 1)); // use day icon for forecast
+    const icon = materialIcon(weatherIcon(d.weather_code[i], 1));
     const max = Math.round(d.temperature_2m_max[i]);
     const min = Math.round(d.temperature_2m_min[i]);
     const prob = d.precipitation_probability_max[i];
@@ -522,7 +567,6 @@ function hideForecast() {
 
 // ── Geocoding ──────────────────────────────────────────────────────────────
 async function searchLocation(query, countryCode) {
-  // Request more results so client-side filtering still leaves enough to choose from
   const count = countryCode ? 20 : 10;
   const url = 'https://geocoding-api.open-meteo.com/v1/search?name='
     + encodeURIComponent(query) + '&count=' + count + '&language=en&format=json';
@@ -530,7 +574,6 @@ async function searchLocation(query, countryCode) {
   if (!res.ok) throw new Error('Geocoding failed');
   const data = await res.json();
   let results = data.results || [];
-  // The API countrycode param is unreliable — filter client-side instead
   if (countryCode) {
     results = results.filter(r => r.country_code && r.country_code.toUpperCase() === countryCode.toUpperCase());
   }
@@ -558,19 +601,16 @@ function showLocationResults(results) {
 }
 
 function applyLocationResult(r) {
-  // Fill in all fields
   const displayName = r.name + (r.admin1 ? ', ' + r.admin1 : '') + (r.country ? ', ' + r.country : '');
   $('weather-location-name').value = displayName;
   $('weather-lat').value  = r.latitude;
   $('weather-lon').value  = r.longitude;
   $('weather-tz').value   = r.timezone || 'UTC';
   $('weather-search').value = displayName;
-  // Hide results
   $('weather-search-results').style.display = 'none';
 }
 
 // ── Weather ────────────────────────────────────────────────────────────────
-// WMO weather code → Material Symbols icon name
 function weatherDescription(code) {
   const d = {
     0: 'Clear sky',
@@ -589,18 +629,18 @@ function weatherDescription(code) {
 }
 
 function weatherIcon(code, isDay) {
-  if (code === 0)               return isDay ? 'clear_day'            : 'clear_night';
-  if (code <= 2)                return isDay ? 'partly_cloudy_day'    : 'partly_cloudy_night';
+  if (code === 0)               return isDay ? 'clear_day'         : 'clear_night';
+  if (code <= 2)                return isDay ? 'partly_cloudy_day' : 'partly_cloudy_night';
   if (code === 3)               return 'cloudy';
-  if (code <= 49)               return 'foggy';                        // fog, haze, rime
-  if (code <= 59)               return isDay ? 'rainy_light'          : 'rainy_light';   // drizzle
-  if (code <= 69)               return 'rainy';                        // rain
-  if (code === 70 || code === 71 || code === 73 || code === 75 || code === 77) return 'weather_snowy'; // snow
+  if (code <= 49)               return 'foggy';
+  if (code <= 59)               return 'rainy_light';
+  if (code <= 69)               return 'rainy';
+  if (code === 70 || code === 71 || code === 73 || code === 75 || code === 77) return 'weather_snowy';
   if (code === 72 || code === 74 || code === 76) return 'snowing_heavy';
-  if (code <= 82)               return isDay ? 'rainy'                : 'rainy';         // showers
-  if (code <= 84)               return 'weather_snowy';                // snow showers
+  if (code <= 82)               return 'rainy';
+  if (code <= 84)               return 'weather_snowy';
   if (code <= 86)               return 'snowing_heavy';
-  if (code <= 99)               return 'thunderstorm';                 // thunderstorm
+  if (code <= 99)               return 'thunderstorm';
   return 'thermometer';
 }
 
@@ -629,10 +669,9 @@ async function fetchWeather() {
     const data = await res.json();
     const c = data.current;
     const d = data.daily;
-    lastDailyData = d; // store for popup
+    lastDailyData = d;
     buildForecastPopup(d);
 
-    // Current conditions
     $('w-icon').innerHTML    = materialIcon(weatherIcon(c.weather_code, c.is_day));
     $('w-temp').textContent  = Math.round(c.temperature_2m) + '°C';
     $('w-feels').textContent = 'Feels like ' + Math.round(c.apparent_temperature) + '°C';
@@ -640,20 +679,17 @@ async function fetchWeather() {
     $('w-cloud').innerHTML   = materialIcon('cloud') + ' ' + c.cloud_cover + '%';
     $('w-wind').innerHTML    = materialIcon('air') + ' ' + Math.round(c.wind_speed_10m) + ' km/h ' + windDirection(c.wind_direction_10m);
 
-    // Today's daily values (index 0 = today)
-    const maxTemp   = Math.round(d.temperature_2m_max[0]);
-    const minTemp   = Math.round(d.temperature_2m_min[0]);
-    const rainProb  = d.precipitation_probability_max[0];
-    const rainSum   = d.precipitation_sum[0];
+    const maxTemp  = Math.round(d.temperature_2m_max[0]);
+    const minTemp  = Math.round(d.temperature_2m_min[0]);
+    const rainProb = d.precipitation_probability_max[0];
+    const rainSum  = d.precipitation_sum[0];
 
     $('w-minmax').innerHTML  = materialIcon('thermostat') + ' ' + minTemp + '° / ' + maxTemp + '°';
 
-    // Rain line: only show mm if there's meaningful precipitation
     let rainText = rainProb + '% chance of rain';
     if (rainSum > 0) rainText = rainProb + '% chance of ' + rainSum + ' mm';
     $('w-precip').innerHTML  = materialIcon('water_drop') + ' ' + rainText;
 
-    // Location label
     const locEl = $('weather-location');
     locEl.textContent = w.locationName || '';
     locEl.classList.toggle('hidden', !w.locationName);
@@ -670,7 +706,6 @@ function applyWeatherVisibility() {
   const locEl = $('weather-location');
   if (!enabled) locEl.classList.add('hidden');
   if (enabled) fetchWeather();
-  // Recalculate groups offset since weather widget changes block height
   requestAnimationFrame(adjustGroupsOffset);
 }
 
@@ -696,13 +731,10 @@ const BG_PRESETS = [
 
 function applyBg(url) {
   $('bg').style.backgroundImage = 'url(' + url + ')';
-  state.bg = url; 
-  
-  // Turn off automated Bing background if an explicit preset is chosen
+  state.bg = url;
   state.useBingBg = false;
   if ($('toggle-bing-bg')) $('toggle-bing-bg').checked = false;
-  
-  persist(); // Keeps your original saving mechanism intact
+  persist();
   document.querySelectorAll('.bg-preset').forEach(p => p.classList.toggle('active', p.dataset.url === url));
 }
 
@@ -778,18 +810,10 @@ let editMode = false;
 function render() {
   applyTitleVisibility();
   applyTheme();
-  
-  // 1. Sync the checkbox toggle visual state in the modal
-  if ($('toggle-bing-bg')) {
-    $('toggle-bing-bg').checked = !!state.useBingBg;
-  }
 
-  // 2. Hide manual inputs if Bing is enabled, show them if it's disabled
-  if ($('manual-bg-section')) {
-    $('manual-bg-section').style.display = state.useBingBg ? 'none' : 'block';
-  }
+  if ($('toggle-bing-bg')) $('toggle-bing-bg').checked = !!state.useBingBg;
+  if ($('manual-bg-section')) $('manual-bg-section').style.display = state.useBingBg ? 'none' : 'block';
 
-  // 3. Pick the appropriate rendering pipeline
   if (state.useBingBg) {
     fetchBingImageOfTheDay();
   } else {
@@ -836,7 +860,6 @@ function render() {
     container.appendChild(groupEl);
   });
 
-  // Recalculate offset after DOM updates
   requestAnimationFrame(adjustGroupsOffset);
 }
 
@@ -844,19 +867,12 @@ async function fetchBingImageOfTheDay() {
   try {
     const response = await fetch("https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=en-AU");
     if (!response.ok) throw new Error("Network response error");
-    
     const payload = await response.json();
     if (payload && payload.images && payload.images.length > 0) {
       const resolvedPath = "https://www.bing.com" + payload.images[0].url;
-      
-      // Paint the CSS canvas wrapper without touching your toggle flags
       $('bg').style.backgroundImage = 'url(' + resolvedPath + ')';
       state.bg = resolvedPath;
-      
-      // Sync the placeholder textbox helper if present
-      if ($('custom-bg')) {
-        $('custom-bg').value = resolvedPath;
-      }
+      if ($('custom-bg')) $('custom-bg').value = resolvedPath;
     }
   } catch (error) {
     console.error("Automated background fetch sync failure:", error);
@@ -1101,7 +1117,6 @@ function pinCurrentBg() {
   state.pinnedBgs.push(url);
   persist();
   renderPinnedBgs();
-  // Brief feedback on pin button
   const btn = $('btn-pin-bg');
   const orig = btn.textContent;
   btn.textContent = '✓';
@@ -1120,17 +1135,15 @@ function openSettings() {
     btn.addEventListener('click', () => applyBg(p.url));
     presets.appendChild(btn);
   });
-  
-  // Add this line right here to ensure the switch stays aligned on load!
+
   if ($('toggle-bing-bg')) $('toggle-bing-bg').checked = !!state.useBingBg;
-  
+
   $('toggle-title').checked = !!state.showTitle;
   $('settings-title-input').value = state.title || '';
   $('title-edit-row').style.display = state.showTitle ? 'block' : 'none';
   $('toggle-link-target').checked = (state.linkTarget === '_self');
-  // Tutorial toggle — checked means "run again next load" i.e. tutorialSeen is false
   $('toggle-tutorial').checked = !state.tutorialSeen;
-  // Weather settings
+
   const wEnabled = state.weather && state.weather.enabled;
   $('toggle-weather').checked = wEnabled;
   $('weather-settings-row').style.display = wEnabled ? 'block' : 'none';
@@ -1140,9 +1153,12 @@ function openSettings() {
   $('weather-tz').value  = (state.weather && state.weather.tz)  || 'Australia/Sydney';
   $('weather-search').value = (state.weather && state.weather.locationName) || '';
   $('weather-search-results').style.display = 'none';
+
   renderGroupList();
   renderPinnedBgs();
   syncThemeUI();
+  refreshUpdatePanel();
+
   // Always open on General tab
   document.querySelectorAll('.settings-nav-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
@@ -1165,8 +1181,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   applyTheme();
   applyWeatherVisibility();
   maybeStartTutorial();
+
+  // Silent update check on load
+  checkForUpdates();
+
   window.addEventListener('resize', adjustGroupsOffset);
-  // Refresh weather every 15 minutes
   setInterval(fetchWeather, 15 * 60 * 1000);
 
   // Settings tab switching
@@ -1177,6 +1196,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       btn.classList.add('active');
       const panel = document.querySelector(`.settings-panel[data-panel="${btn.dataset.tab}"]`);
       if (panel) panel.classList.add('active');
+      // Refresh the update panel whenever it becomes visible
+      if (btn.dataset.tab === 'updates') refreshUpdatePanel();
     });
   });
 
@@ -1200,7 +1221,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('tile-cancel').addEventListener('click', () => closeModal('tile-modal'));
   $('tile-save').addEventListener('click', saveTile);
 
-  // Settings modal
+  // Settings modal — general
   $('btn-custom-bg').addEventListener('click', () => { const v = $('custom-bg').value.trim(); if (v) applyBg(v); });
   $('btn-pin-bg').addEventListener('click', pinCurrentBg);
   $('toggle-title').addEventListener('change', e => {
@@ -1214,7 +1235,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('toggle-link-target').addEventListener('change', e => {
     state.linkTarget = e.target.checked ? '_self' : '_blank'; persist();
   });
-  // Tutorial toggle — on = will run next load; also offer instant preview
   $('toggle-tutorial').addEventListener('change', e => {
     state.tutorialSeen = !e.target.checked;
     persist();
@@ -1246,11 +1266,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     btn.textContent = 'Search'; btn.disabled = false;
   });
-
   $('weather-search').addEventListener('keydown', e => {
     if (e.key === 'Enter') $('btn-weather-search').click();
   });
-
   $('btn-save-weather').addEventListener('click', () => {
     if (!state.weather) state.weather = {};
     state.weather.locationName = $('weather-location-name').value.trim();
@@ -1258,22 +1276,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     state.weather.lon = $('weather-lon').value.trim();
     state.weather.tz  = $('weather-tz').value.trim() || 'UTC';
     persist(); fetchWeather();
-    // Brief feedback
     const btn = $('btn-save-weather');
     const orig = btn.textContent;
     btn.textContent = '✓ Saved';
     setTimeout(() => btn.textContent = orig, 1500);
   });
-  // Handle the Daily Bing background toggle action switch
   if ($('toggle-bing-bg')) {
     $('toggle-bing-bg').addEventListener('change', e => {
       state.useBingBg = e.target.checked;
-      
-      persist(); // Save choice to config instantly
-      render();  // Trigger UI changes and hide/show the manual options immediately
+      persist(); render();
     });
   }
   $('settings-close').addEventListener('click', () => closeModal('settings-modal'));
+
+  // Update panel
+  $('btn-check-updates').addEventListener('click', () => checkForUpdates(true));
 
   // Title modal
   $('title-cancel').addEventListener('click', () => closeModal('title-modal'));
@@ -1310,7 +1327,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelectorAll('.color-theme-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       state.theme.colorTheme = btn.dataset.theme;
-      // Reset accent to theme default when switching themes
       state.theme.accentColor = COLOR_THEMES[btn.dataset.theme]?.accent || '#7c9ef0';
       persist(); applyTheme(); syncThemeUI();
     });
@@ -1361,7 +1377,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Theme — accent colour (colour picker)
+  // Theme — accent colour
   const accentInput = $('accent-color-input');
   if (accentInput) {
     accentInput.addEventListener('input', () => {
@@ -1370,7 +1386,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Theme — accent colour preset dots (delegated to avoid inline onclick issues in extensions)
+  // Theme — accent colour preset dots
   document.querySelector('.accent-presets')?.addEventListener('click', e => {
     const dot = e.target.closest('.accent-preset-dot');
     if (!dot) return;

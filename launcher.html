@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 -960 960 960'><style>path{fill:%231C1B1F}@media(prefers-color-scheme:dark){path{fill:%23FFFFFF}}</style><path d='M192-144v-337l-64 49-44-58 108-82v-124h72v69l216-165 396 302-44 58-64-49v337H516v-216h-72v216H192Zm0-600q0-48 30-78t78-30q17 0 26.5-9.5T336-888h72q0 48-30 78t-78 30q-17 0-26.5 9.5T264-744h-72Z'/></svg>">
-<link rel="shortcut icon" type="image/svg+xml"  href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 -960 960 960'><style>path{fill:%231C1B1F}@media(prefers-color-scheme:dark){path{fill:%23FFFFFF}}</style><path d='M192-144v-337l-64 49-44-58 108-82v-124h72v69l216-165 396 302-44 58-64-49v337H516v-216h-72v216H192Zm0-600q0-48 30-78t78-30q17 0 26.5-9.5T336-888h72q0 48-30 78t-78 30q-17 0-26.5 9.5T264-744h-72Z'/></svg>">
+<link rel="shortcut icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 -960 960 960'><style>path{fill:%231C1B1F}@media(prefers-color-scheme:dark){path{fill:%23FFFFFF}}</style><path d='M192-144v-337l-64 49-44-58 108-82v-124h72v69l216-165 396 302-44 58-64-49v337H516v-216h-72v216H192Zm0-600q0-48 30-78t78-30q17 0 26.5-9.5T336-888h72q0 48-30 78t-78 30q-17 0-26.5 9.5T264-744h-72Z'/></svg>">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Launcher</title>
@@ -46,8 +46,25 @@
   #search:focus { background: rgba(255,255,255,0.13); border-color: rgba(255,255,255,0.28); }
 
   #action-bar { position: fixed; bottom: 1.2rem; right: 1.2rem; z-index: 10; display: flex; gap: 8px; align-items: center; }
-  .icon-btn { background: rgba(15,17,23,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--border); color: rgba(255,255,255,0.7); border-radius: 10px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; transition: all 0.15s; }
+  .icon-btn { background: rgba(15,17,23,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--border); color: rgba(255,255,255,0.7); border-radius: 10px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; transition: all 0.15s; position: relative; }
   .icon-btn:hover { background: rgba(255,255,255,0.15); color: #fff; border-color: var(--border-hover); }
+
+  /* Update badge on settings button */
+  #update-badge {
+    display: none;
+    position: absolute;
+    top: -4px; right: -4px;
+    width: 14px; height: 14px;
+    background: var(--danger);
+    border-radius: 50%;
+    border: 2px solid #0f1117;
+    font-size: 8px; font-weight: 700;
+    color: #fff;
+    align-items: center; justify-content: center;
+    line-height: 1;
+    pointer-events: none;
+  }
+  #update-badge.visible { display: flex; }
 
   #edit-badge { display: none; position: fixed; bottom: 1.2rem; left: 50%; transform: translateX(-50%); background: var(--accent); color: #0f1117; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; padding: 0.35rem 0.9rem; border-radius: 100px; z-index: 20; white-space: nowrap; animation: badge-pop 0.2s ease; }
   body.edit-mode #edit-badge { display: block; }
@@ -102,11 +119,6 @@
   .modal { background: #1a1d27; border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 2rem; width: min(460px, 92vw); box-shadow: 0 24px 80px rgba(0,0,0,0.6); animation: modal-in 0.2s ease; max-height: 90vh; overflow-y: auto; }
   @keyframes modal-in { from { opacity:0; transform: scale(0.95) translateY(10px); } to { opacity:1; transform: none; } }
   .modal h2 { font-family: 'DM Serif Display', serif; font-size: 1.3rem; margin-bottom: 1.5rem; color: #fff; }
-  
-#settings-modal .modal {
-    width: min(840px, 95vw);
-    max-width: 840px;
-  }
 
   /* ── Tabbed settings layout ── */
   .settings-modal-tabbed {
@@ -153,11 +165,24 @@
     transition: all 0.15s;
     text-align: left;
     width: 100%;
+    position: relative;
   }
   .settings-nav-btn .material-symbols-rounded { font-size: 1rem; flex-shrink: 0; }
   .settings-nav-btn:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.8); }
   .settings-nav-btn.active { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(124,158,240,0.2); }
   .settings-nav-btn.active .material-symbols-rounded { color: var(--accent); }
+
+  /* Update dot on nav button */
+  .nav-update-dot {
+    display: none;
+    width: 7px; height: 7px;
+    background: var(--danger);
+    border-radius: 50%;
+    position: absolute;
+    top: 6px; right: 8px;
+    flex-shrink: 0;
+  }
+  .nav-update-dot.visible { display: block; }
 
   .settings-nav-footer {
     margin-top: auto;
@@ -187,10 +212,6 @@
     padding-bottom: 0.75rem;
     border-bottom: 1px solid rgba(255,255,255,0.07);
   }
-
-  /* Remove old grid wrapper rules (no longer needed) */
-  .settings-grid-wrapper { display: none; }
-  .settings-column { display: none; }
 
   .form-group { margin-bottom: 1rem; }
   .form-group label { display: block; font-size: 0.75rem; font-weight: 500; color: rgba(255,255,255,0.45); margin-bottom: 0.35rem; letter-spacing: 0.06em; text-transform: uppercase; }
@@ -230,15 +251,7 @@
   .bg-custom-input { display: flex; gap: 8px; margin-top: 0.5rem; }
   .bg-custom-input input { flex: 1; }
 
-  .pinned-del-btn {
-    position: absolute; top: -5px; right: -5px;
-    width: 16px; height: 16px; border-radius: 50%;
-    background: rgba(224,90,90,0.85); color: #fff;
-    border: none; cursor: pointer; font-size: 8px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-    opacity: 0; transition: opacity 0.15s;
-    line-height: 1; padding: 0;
-  }
+  .pinned-del-btn { position: absolute; top: -5px; right: -5px; width: 16px; height: 16px; border-radius: 50%; background: rgba(224,90,90,0.85); color: #fff; border: none; cursor: pointer; font-size: 8px; font-weight: 700; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; line-height: 1; padding: 0; }
   div:hover > .pinned-del-btn { opacity: 1; }
   .form-divider { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 1.2rem 0; }
 
@@ -255,120 +268,35 @@
   .group-action-btn.del { color: rgba(224,90,90,0.4); }
   .group-action-btn.del:hover { color: var(--danger); background: rgba(224,90,90,0.15); }
 
-/* Weather */
-#weather-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1.5rem;
-  animation: fade-in 0.5s ease;
-  width: fit-content;
-  margin-left: auto;
-  margin-right: auto;
-  cursor: pointer;
-  min-height: 90px; /* reserve space so tiles don't shift when weather data arrives */
-}
-
-#weather-main-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2rem;
-}
+  /* Weather */
+  #weather-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 1.5rem; animation: fade-in 0.5s ease; width: fit-content; margin-left: auto; margin-right: auto; cursor: pointer; min-height: 90px; }
+  #weather-main-row { display: flex; align-items: center; justify-content: center; gap: 2rem; }
   #weather-wrap.hidden { display: none; }
   @keyframes fade-in { from { opacity:0; transform: translateY(-6px); } to { opacity:1; transform:none; } }
-
-  .weather-main {
-    display: flex; align-items: center; gap: 0.8rem;
-  }
+  .weather-main { display: flex; align-items: center; gap: 0.8rem; }
   .weather-icon { font-size: 2.8rem; line-height: 1; }
   .weather-icon .material-symbols-rounded { font-size: 3rem; color: rgba(255,255,255,0.9); vertical-align: middle; }
   .weather-temps { display: flex; flex-direction: column; }
-  .weather-temp {
-    font-family: 'DM Serif Display', serif;
-    font-size: 2.4rem; color: #fff; line-height: 1; letter-spacing: -0.02em;
-  }
-  .weather-feels {
-    font-size: 0.78rem; color: rgba(255,255,255,0.45); margin-top: 2px;
-  }
-  .weather-condition {
-    font-size: 0.78rem; color: rgba(255,255,255,0.55); margin-top: 3px;
-    font-style: italic;
-  }
-  .weather-details {
-    display: flex; flex-direction: column; gap: 4px;
-    border-left: 1px solid rgba(255,255,255,0.12); padding-left: 1.5rem;
-  }
-  .weather-detail {
-    font-size: 0.78rem; color: rgba(255,255,255,0.55);
-    display: flex; align-items: center; gap: 5px;
-  }
+  .weather-temp { font-family: 'DM Serif Display', serif; font-size: 2.4rem; color: #fff; line-height: 1; letter-spacing: -0.02em; }
+  .weather-feels { font-size: 0.78rem; color: rgba(255,255,255,0.45); margin-top: 2px; }
+  .weather-condition { font-size: 0.78rem; color: rgba(255,255,255,0.55); margin-top: 3px; font-style: italic; }
+  .weather-details { display: flex; flex-direction: column; gap: 4px; border-left: 1px solid rgba(255,255,255,0.12); padding-left: 1.5rem; }
+  .weather-detail { font-size: 0.78rem; color: rgba(255,255,255,0.55); display: flex; align-items: center; gap: 5px; }
   .weather-detail .material-symbols-rounded { font-size: 1rem; color: rgba(255,255,255,0.5); }
-  .weather-location {
-    font-size: 0.7rem; color: rgba(255,255,255,0.3);
-    text-align: center; margin-top: -0.8rem; margin-bottom: 0.5rem;
-    letter-spacing: 0.06em; text-transform: uppercase;
-  }
+  .weather-location { font-size: 0.7rem; color: rgba(255,255,255,0.3); text-align: center; margin-top: -0.8rem; margin-bottom: 0.5rem; letter-spacing: 0.06em; text-transform: uppercase; }
   .weather-location.hidden { display: none; }
   .material-symbols-rounded { font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 24; user-select: none; }
 
-  .weather-result-item {
-    padding: 0.5rem 0.75rem;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 0.82rem;
-    transition: background 0.15s, border-color 0.15s;
-  }
+  .weather-result-item { padding: 0.5rem 0.75rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; font-size: 0.82rem; transition: background 0.15s, border-color 0.15s; }
   .weather-result-item:hover { background: rgba(255,255,255,0.12); border-color: var(--accent); }
   .weather-result-name { color: #fff; font-weight: 500; }
   .weather-result-detail { color: rgba(255,255,255,0.4); font-size: 0.75rem; margin-top: 1px; }
   details summary::-webkit-details-marker { display: none; }
 
   /* Forecast popup */
-#forecast-popup {
-  position: fixed;
-  z-index: 50;
-  top: 17rem;
-  left: 50%;
-  transform: translateX(-50%);
-
-  background: rgba(15,17,23,0.82);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 16px;
-  padding: 1rem 1.4rem;
-  min-width: 340px;
-
-  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
-
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-
-  transition:
-    opacity 0.18s ease,
-    visibility 0.18s ease;
-
-  will-change: opacity, transform;
-}
-#forecast-popup.visible {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-}
-  .forecast-row {
-    display: grid;
-    grid-template-columns: 3.5rem 1.4rem 4rem 1fr 3.5rem;
-    align-items: center; gap: 0.6rem;
-    padding: 0.45rem 0;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    font-size: 0.82rem; color: rgba(255,255,255,0.75);
-  }
+  #forecast-popup { position: fixed; z-index: 50; top: 17rem; left: 50%; transform: translateX(-50%); background: rgba(15,17,23,0.82); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 1rem 1.4rem; min-width: 340px; box-shadow: 0 16px 48px rgba(0,0,0,0.5); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.18s ease, visibility 0.18s ease; will-change: opacity, transform; }
+  #forecast-popup.visible { opacity: 1; visibility: visible; pointer-events: auto; }
+  .forecast-row { display: grid; grid-template-columns: 3.5rem 1.4rem 4rem 1fr 3.5rem; align-items: center; gap: 0.6rem; padding: 0.45rem 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.82rem; color: rgba(255,255,255,0.75); }
   .forecast-row:last-child { border-bottom: none; }
   .forecast-day { font-weight: 600; color: #fff; }
   .forecast-row.today .forecast-day { color: var(--accent); }
@@ -376,161 +304,124 @@
   .forecast-minmax { color: rgba(255,255,255,0.7); white-space: nowrap; }
   .forecast-rain { color: rgba(255,255,255,0.5); font-size: 0.76rem; }
   .forecast-amount { color: rgba(255,255,255,0.4); font-size: 0.76rem; text-align: right; }
-  #weather-wrap { cursor: pointer; }
   #weather-wrap:hover .weather-hint { opacity: 1; }
-  .weather-hint {
-    font-size: 0.65rem; color: rgba(255,255,255,0.25);
-    text-align: center; margin-top: 0.4rem;
-    opacity: 0; transition: opacity 0.2s;
-    letter-spacing: 0.05em;
-  }
+  .weather-hint { font-size: 0.65rem; color: rgba(255,255,255,0.25); text-align: center; margin-top: 0.4rem; opacity: 0; transition: opacity 0.2s; letter-spacing: 0.05em; }
 
   /* ── Theme panel ── */
-  .theme-section-label {
-    font-size: 0.68rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
-    color: rgba(255,255,255,0.3); margin-bottom: 0.5rem; margin-top: 0.2rem;
-  }
+  .theme-section-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 0.5rem; margin-top: 0.2rem; }
   .theme-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 0.2rem; }
-
-  .color-theme-btn {
-    width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent;
-    cursor: pointer; transition: transform 0.15s, border-color 0.15s;
-    position: relative; outline: none;
-  }
+  .color-theme-btn { width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 0.15s, border-color 0.15s; position: relative; outline: none; }
   .color-theme-btn:hover { transform: scale(1.12); }
   .color-theme-btn.active { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.25); }
-
-  .font-pairing-btn {
-    padding: 0.35rem 0.75rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.55);
-    font-size: 0.75rem; cursor: pointer; transition: all 0.15s; font-family: inherit;
-    white-space: nowrap;
-  }
-  .font-pairing-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.85); }
-  .font-pairing-btn.active { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
-
-  .icon-size-btn {
-    padding: 0.3rem 0.7rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.55);
-    font-size: 0.75rem; cursor: pointer; transition: all 0.15s; font-family: inherit;
-  }
+  .icon-size-btn { padding: 0.3rem 0.7rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.55); font-size: 0.75rem; cursor: pointer; transition: all 0.15s; font-family: inherit; }
   .icon-size-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.85); }
   .icon-size-btn.active { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
-
-  .clock-font-btn {
-    padding: 0.3rem 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.55);
-    font-size: 0.75rem; cursor: pointer; transition: all 0.15s; font-family: inherit;
-  }
+  .clock-font-btn { padding: 0.3rem 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.55); font-size: 0.75rem; cursor: pointer; transition: all 0.15s; font-family: inherit; }
   .clock-font-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.85); }
   .clock-font-btn.active { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
-
   .theme-slider-row { display: flex; align-items: center; gap: 10px; }
-  .theme-slider-row input[type=range] {
-    flex: 1; -webkit-appearance: none; appearance: none; height: 4px;
-    border-radius: 2px; background: rgba(255,255,255,0.15); outline: none; cursor: pointer;
-  }
-  .theme-slider-row input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
-    background: var(--accent); cursor: pointer; transition: transform 0.1s;
-  }
+  .theme-slider-row input[type=range] { flex: 1; -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.15); outline: none; cursor: pointer; }
+  .theme-slider-row input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; transition: transform 0.1s; }
   .theme-slider-row input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
   .theme-slider-val { font-size: 0.75rem; color: rgba(255,255,255,0.45); min-width: 3rem; text-align: right; }
-
   .accent-color-row { display: flex; align-items: center; gap: 10px; }
-  #accent-color-input {
-    -webkit-appearance: none; appearance: none;
-    width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2);
-    padding: 2px; background: none; cursor: pointer; flex-shrink: 0;
-  }
+  #accent-color-input { -webkit-appearance: none; appearance: none; width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); padding: 2px; background: none; cursor: pointer; flex-shrink: 0; }
   #accent-color-input::-webkit-color-swatch-wrapper { padding: 0; border-radius: 50%; }
   #accent-color-input::-webkit-color-swatch { border-radius: 50%; border: none; }
   .accent-presets { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-  .accent-preset-dot {
-    width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent;
-    cursor: pointer; transition: transform 0.15s, border-color 0.15s; flex-shrink: 0;
-  }
+  .accent-preset-dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 0.15s, border-color 0.15s; flex-shrink: 0; }
   .accent-preset-dot:hover { transform: scale(1.18); border-color: rgba(255,255,255,0.5); }
 
-  /* ── Tutorial overlay ── */
-  #tutorial-overlay {
-    display: none;
-    position: fixed; inset: 0; z-index: 200;
-    background: rgba(0,0,0,0.72);
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
+  /* ── Updates panel ── */
+  .update-version-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 1.2rem;
   }
-  #tutorial-overlay.visible { display: block; }
-
-  #tutorial-spotlight {
-    position: absolute;
-    border-radius: 14px;
-    box-shadow: 0 0 0 9999px rgba(0,0,0,0.65);
-    border: 2px solid var(--accent);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    pointer-events: none;
+  .update-version-item {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
   }
-
-  #tutorial-card {
-    position: fixed;
-    width: 320px;
-    background: #1a1d27;
-    border: 1px solid rgba(255,255,255,0.14);
-    border-radius: 16px;
-    padding: 1.3rem 1.4rem 1.1rem;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.7);
-    z-index: 201;
-    animation: tut-card-in 0.22s ease;
+  .update-version-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 0.3rem;
   }
-  @keyframes tut-card-in {
-    from { opacity: 0; transform: translateY(8px) translateX(var(--tx, 0)); }
-    to   { opacity: 1; transform: translateY(0)   translateX(var(--tx, 0)); }
-  }
-
-  #tutorial-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 0.7rem;
-  }
-  #tutorial-step-count {
-    font-size: 0.7rem; color: rgba(255,255,255,0.3);
-    letter-spacing: 0.08em; text-transform: uppercase;
-  }
-  #tutorial-skip {
-    background: none; border: none; color: rgba(255,255,255,0.3);
-    font-size: 0.75rem; cursor: pointer; padding: 2px 6px;
-    border-radius: 5px; font-family: var(--font-body);
-    transition: all 0.15s;
-  }
-  #tutorial-skip:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.07); }
-
-  #tutorial-title {
+  .update-version-val {
     font-family: var(--font-display);
-    font-size: 1.05rem; color: #fff;
-    margin-bottom: 0.5rem; line-height: 1.3;
-  }
-  #tutorial-body {
-    font-size: 0.84rem; color: rgba(255,255,255,0.65);
-    line-height: 1.55; margin-bottom: 1rem;
-  }
-  #tutorial-body kbd {
-    display: inline-block; padding: 1px 6px;
-    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 5px; font-size: 0.78rem; font-family: monospace; color: rgba(255,255,255,0.8);
-  }
-  #tutorial-body code {
-    background: rgba(255,255,255,0.08); border-radius: 4px;
-    padding: 1px 5px; font-size: 0.8rem; color: var(--accent);
+    font-size: 1.4rem;
+    color: #fff;
+    line-height: 1;
   }
 
-  #tutorial-footer {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 8px; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 0.8rem;
+  .update-status-msg {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.5);
+    padding: 0.6rem 0;
+    min-height: 2rem;
   }
+  .update-status-msg.ok      { color: #6ee7a0; }
+  .update-status-msg.available { color: var(--accent); font-weight: 500; }
+  .update-status-msg.error   { color: var(--danger); }
+
+  .update-download-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.65rem 1.2rem;
+    background: var(--accent);
+    color: #0f1117;
+    border-radius: 9px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    font-family: var(--font-body);
+    text-decoration: none;
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+  .update-download-btn:hover { background: #a0b8f5; }
+  .update-download-btn .material-symbols-rounded { font-size: 1.1rem; }
+
+  .update-instructions {
+    font-size: 0.76rem;
+    color: rgba(255,255,255,0.28);
+    line-height: 1.65;
+    margin-top: 1rem;
+    padding: 0.8rem 1rem;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .update-instructions ol { padding-left: 1.1rem; }
+  .update-instructions li { margin-bottom: 0.25rem; }
+  .update-instructions code { background: rgba(255,255,255,0.08); border-radius: 4px; padding: 1px 5px; font-size: 0.75rem; color: var(--accent); }
+
+  /* ── Tutorial overlay ── */
+  #tutorial-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.72); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+  #tutorial-overlay.visible { display: block; }
+  #tutorial-spotlight { position: absolute; border-radius: 14px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.65); border: 2px solid var(--accent); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; }
+  #tutorial-card { position: fixed; width: 320px; background: #1a1d27; border: 1px solid rgba(255,255,255,0.14); border-radius: 16px; padding: 1.3rem 1.4rem 1.1rem; box-shadow: 0 24px 64px rgba(0,0,0,0.7); z-index: 201; animation: tut-card-in 0.22s ease; }
+  @keyframes tut-card-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  #tutorial-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.7rem; }
+  #tutorial-step-count { font-size: 0.7rem; color: rgba(255,255,255,0.3); letter-spacing: 0.08em; text-transform: uppercase; }
+  #tutorial-skip { background: none; border: none; color: rgba(255,255,255,0.3); font-size: 0.75rem; cursor: pointer; padding: 2px 6px; border-radius: 5px; font-family: var(--font-body); transition: all 0.15s; }
+  #tutorial-skip:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.07); }
+  #tutorial-title { font-family: var(--font-display); font-size: 1.05rem; color: #fff; margin-bottom: 0.5rem; line-height: 1.3; }
+  #tutorial-body { font-size: 0.84rem; color: rgba(255,255,255,0.65); line-height: 1.55; margin-bottom: 1rem; }
+  #tutorial-body kbd { display: inline-block; padding: 1px 6px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; font-size: 0.78rem; font-family: monospace; color: rgba(255,255,255,0.8); }
+  #tutorial-body code { background: rgba(255,255,255,0.08); border-radius: 4px; padding: 1px 5px; font-size: 0.8rem; color: var(--accent); }
+  #tutorial-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 0.8rem; }
   #tutorial-pips { display: flex; gap: 5px; align-items: center; }
-  .tut-pip {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: rgba(255,255,255,0.18); transition: all 0.2s;
-  }
+  .tut-pip { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.18); transition: all 0.2s; }
   .tut-pip.active { background: var(--accent); width: 18px; border-radius: 3px; }
   #tutorial-btns { display: flex; gap: 6px; }
   #tutorial-btns .btn { padding: 0.45rem 0.9rem; font-size: 0.8rem; }
@@ -544,30 +435,30 @@
 
 <div id="app">
   <div id="clock-weather-block">
-  <div id="clock-wrap">
-    <div id="clock">00:00</div>
-    <div id="date-str">Loading…</div>
-  </div>
-  <div id="weather-location" class="weather-location"></div>
-  <div id="weather-wrap" class="hidden">
-  <div id="weather-main-row">
-    <div class="weather-main">
-      <div class="weather-icon" id="w-icon"></div>
-      <div class="weather-temps">
-        <div class="weather-temp" id="w-temp"></div>
-        <div class="weather-feels" id="w-feels"></div>
-        <div class="weather-condition" id="w-condition"></div>
+    <div id="clock-wrap">
+      <div id="clock">00:00</div>
+      <div id="date-str">Loading…</div>
+    </div>
+    <div id="weather-location" class="weather-location"></div>
+    <div id="weather-wrap" class="hidden">
+      <div id="weather-main-row">
+        <div class="weather-main">
+          <div class="weather-icon" id="w-icon"></div>
+          <div class="weather-temps">
+            <div class="weather-temp" id="w-temp"></div>
+            <div class="weather-feels" id="w-feels"></div>
+            <div class="weather-condition" id="w-condition"></div>
+          </div>
+        </div>
+        <div class="weather-details">
+          <div class="weather-detail" id="w-minmax"></div>
+          <div class="weather-detail" id="w-precip"></div>
+          <div class="weather-detail" id="w-cloud"></div>
+          <div class="weather-detail" id="w-wind"></div>
+        </div>
       </div>
+      <div class="weather-hint">Click for forecast</div>
     </div>
-    <div class="weather-details">
-      <div class="weather-detail" id="w-minmax"></div>
-      <div class="weather-detail" id="w-precip"></div>
-      <div class="weather-detail" id="w-cloud"></div>
-      <div class="weather-detail" id="w-wind"></div>
-    </div>
-	</div>
-    <div class="weather-hint">Click for forecast</div>
-  </div>
   </div><!-- end clock-weather-block -->
   <div id="forecast-popup"></div>
   <div id="groups"></div>
@@ -575,24 +466,19 @@
 
 <div id="edit-badge">EDIT MODE — drag to reorder · click ✏ to edit</div>
 
-<!--<div id="action-bar">
-  <button class="icon-btn" id="btn-save-config" title="Save config.json">💾</button>
-  <button class="icon-btn" id="btn-edit" title="Toggle edit mode (E)">✏️</button>
-  <button class="icon-btn" id="btn-settings" title="Settings">⚙️</button>
-</div> -->
-
 <div id="action-bar">
   <button class="icon-btn" id="btn-save-config" title="Export config.json">
-    <span class="material-symbols-rounded" style="font-size: 18px;">download</span>
+    <span class="material-symbols-rounded" style="font-size:18px;">download</span>
   </button>
   <button class="icon-btn" id="btn-import-config" title="Import config.json">
-    <span class="material-symbols-rounded" style="font-size: 18px;">upload</span>
+    <span class="material-symbols-rounded" style="font-size:18px;">upload</span>
   </button>
   <button class="icon-btn" id="btn-edit" title="Toggle edit mode (E)">
-    <span class="material-symbols-rounded" style="font-size: 18px;">edit</span>
+    <span class="material-symbols-rounded" style="font-size:18px;">edit</span>
   </button>
   <button class="icon-btn" id="btn-settings" title="Settings">
-    <span class="material-symbols-rounded" style="font-size: 18px;">settings</span>
+    <span class="material-symbols-rounded" style="font-size:18px;">settings</span>
+    <span id="update-badge" title="Update available"></span>
   </button>
 </div>
 <input type="file" id="import-file-input" accept=".json" style="display:none" />
@@ -647,6 +533,10 @@
       <button class="settings-nav-btn" data-tab="groups">
         <span class="material-symbols-rounded">folder_open</span> Groups
       </button>
+      <button class="settings-nav-btn" data-tab="updates">
+        <span class="material-symbols-rounded">system_update_alt</span> Updates
+        <span class="nav-update-dot" id="nav-update-dot"></span>
+      </button>
       <div class="settings-nav-footer">
         <button class="btn btn-ghost" id="settings-close" style="width:100%;font-size:0.82rem;">Close</button>
       </div>
@@ -658,7 +548,6 @@
       <!-- GENERAL -->
       <div class="settings-panel active" data-panel="general">
         <div class="panel-heading">General</div>
-
         <div class="form-group">
           <label>Launcher name</label>
           <div style="display:flex;gap:8px">
@@ -666,9 +555,7 @@
             <button class="btn btn-ghost" id="btn-save-title-settings">Save</button>
           </div>
         </div>
-
         <hr class="form-divider" />
-
         <div class="form-group">
           <label>Page title</label>
           <div class="toggle-row">
@@ -679,9 +566,7 @@
             <p style="font-size:0.78rem;color:rgba(255,255,255,0.35);margin-bottom:0;">Displays the launcher name in the top-left corner.</p>
           </div>
         </div>
-
         <hr class="form-divider" />
-
         <div class="form-group">
           <label>Link behaviour</label>
           <div class="toggle-row">
@@ -689,9 +574,7 @@
             <label class="toggle"><input type="checkbox" id="toggle-link-target" /><div class="toggle-track"></div></label>
           </div>
         </div>
-
         <hr class="form-divider" />
-
         <div class="form-group">
           <label>Tutorial</label>
           <div class="toggle-row">
@@ -707,7 +590,6 @@
       <!-- APPEARANCE -->
       <div class="settings-panel" data-panel="appearance">
         <div class="panel-heading">Appearance</div>
-
         <div class="form-group">
           <label>Colour theme</label>
           <div class="theme-chip-row" style="margin-bottom:0.4rem;">
@@ -721,7 +603,6 @@
             <button class="color-theme-btn" data-theme="mono"     title="Monochrome" style="background:linear-gradient(135deg,#141414,#3a3a3a);"></button>
           </div>
         </div>
-
         <div class="form-group">
           <label>Accent colour</label>
           <div class="accent-color-row">
@@ -738,9 +619,7 @@
             </div>
           </div>
         </div>
-
         <hr class="form-divider" />
-
         <div class="form-group">
           <label>Font pairing</label>
           <select id="font-pairing-select">
@@ -752,7 +631,6 @@
             <option value="mono">Geist Mono</option>
           </select>
         </div>
-
         <div class="form-group">
           <label>Clock style</label>
           <div class="theme-chip-row">
@@ -761,9 +639,7 @@
             <button class="clock-font-btn" data-clockfont="mono">Mono</button>
           </div>
         </div>
-
         <hr class="form-divider" />
-
         <div class="form-group">
           <label>Icon size</label>
           <div class="theme-chip-row">
@@ -773,14 +649,12 @@
             <button class="icon-size-btn" data-size="xlarge">X-Large</button>
           </div>
         </div>
-
         <div class="form-group">
           <label>Tile opacity <span id="val-tile-opacity" style="color:var(--accent);font-weight:500;margin-left:4px;">6%</span></label>
           <div class="theme-slider-row">
             <input type="range" id="slider-tile-opacity" min="2" max="30" step="1" value="6" />
           </div>
         </div>
-
         <div class="form-group">
           <label>Tile blur <span id="val-tile-blur" style="color:var(--accent);font-weight:500;margin-left:4px;">12px</span></label>
           <div class="theme-slider-row">
@@ -792,7 +666,6 @@
       <!-- BACKGROUND -->
       <div class="settings-panel" data-panel="background">
         <div class="panel-heading">Background</div>
-
         <div class="form-group">
           <div class="toggle-row">
             <span class="toggle-label">Daily Bing background</span>
@@ -802,20 +675,17 @@
             </label>
           </div>
         </div>
-
         <div id="manual-bg-section">
           <div class="form-group">
             <label>Default images</label>
             <div id="bg-presets"></div>
           </div>
-
           <div id="pinned-bgs-section" style="display:none">
             <div class="form-group">
               <label>My images</label>
               <div id="pinned-bgs-shelf" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
             </div>
           </div>
-
           <div class="form-group">
             <label>Custom image URL</label>
             <div class="bg-custom-input">
@@ -830,14 +700,12 @@
       <!-- WEATHER -->
       <div class="settings-panel" data-panel="weather">
         <div class="panel-heading">Weather</div>
-
         <div class="form-group">
           <div class="toggle-row">
             <span class="toggle-label">Show weather widget</span>
             <label class="toggle"><input type="checkbox" id="toggle-weather" /><div class="toggle-track"></div></label>
           </div>
         </div>
-
         <div id="weather-settings-row" style="display:none">
           <div class="form-group">
             <label>Search location</label>
@@ -865,7 +733,6 @@
             </select>
           </div>
           <div id="weather-search-results" style="display:none;flex-direction:column;gap:4px;margin-bottom:0.8rem;"></div>
-
           <details style="margin-bottom:0.8rem;">
             <summary style="font-size:0.75rem;color:rgba(255,255,255,0.35);cursor:pointer;letter-spacing:0.06em;text-transform:uppercase;list-style:none;user-select:none;">▸ Manual / stored values</summary>
             <div style="margin-top:0.6rem;display:flex;flex-direction:column;gap:0.5rem;">
@@ -889,7 +756,6 @@
               </div>
             </div>
           </details>
-
           <button class="btn btn-primary" id="btn-save-weather" style="width:100%;">Save weather settings</button>
         </div>
       </div>
@@ -897,7 +763,6 @@
       <!-- GROUPS -->
       <div class="settings-panel" data-panel="groups">
         <div class="panel-heading">Groups</div>
-
         <div class="form-group">
           <label>Add new group</label>
           <div style="display:flex;gap:8px">
@@ -905,12 +770,48 @@
             <button class="btn btn-ghost" id="btn-add-group">Add</button>
           </div>
         </div>
-
         <hr class="form-divider" />
-
         <div class="form-group">
           <label>Manage groups — drag to reorder</label>
           <div id="group-list" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
+        </div>
+      </div>
+
+      <!-- UPDATES -->
+      <div class="settings-panel" data-panel="updates">
+        <div class="panel-heading">Updates</div>
+
+        <div class="update-version-grid">
+          <div class="update-version-item">
+            <div class="update-version-label">Installed</div>
+            <div class="update-version-val" id="update-current-version">—</div>
+          </div>
+          <div class="update-version-item">
+            <div class="update-version-label">Latest</div>
+            <div class="update-version-val" id="update-latest-version">—</div>
+          </div>
+        </div>
+
+        <div id="update-status" class="update-status-msg">Not checked yet.</div>
+
+        <a id="btn-download-update" class="update-download-btn"
+           href="https://github.com/CNCow/Launcher/archive/refs/heads/main.zip"
+           target="_blank" rel="noopener">
+          <span class="material-symbols-rounded">download</span> Download latest version
+        </a>
+
+        <button class="btn btn-ghost" id="btn-check-updates" style="width:100%;margin-top:0.75rem;font-size:0.82rem;">
+          <span class="material-symbols-rounded" style="font-size:1rem;vertical-align:middle;margin-right:4px;">refresh</span>Check now
+        </button>
+
+        <div class="update-instructions">
+          <strong style="color:rgba(255,255,255,0.5);display:block;margin-bottom:0.4rem;">How to update</strong>
+          <ol>
+            <li>Click <strong>Download latest version</strong> above</li>
+            <li>Extract the ZIP and replace your extension folder contents</li>
+            <li>Visit <code>chrome://extensions</code> and click ↺ reload on Launcher</li>
+            <li>Open a new tab — done!</li>
+          </ol>
         </div>
       </div>
 
@@ -963,4 +864,6 @@
     </div>
   </div>
 </div>
+
+</body>
 </html>
