@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "Launcher",
-  "version": "1.4",
-  "description": "Replaces the new tab page with your personal site launcher.",
-  "chrome_url_overrides": { "newtab": "launcher.html" },
+  "name": "Peristyle",
+  "version": "1.5",
+  "description": "Your personal sanctuary on the web.",
+  "chrome_url_overrides": { "newtab": "peristyle.html" },
   "web_accessible_resources": [
     {
-      "resources": ["config.json", "images/*"],
+      "resources": ["images/*"],
       "matches": ["<all_urls>"]
     }
   ],

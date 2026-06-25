@@ -1,8 +1,14 @@
-# Launcher
+<p align="center">
+  <img src="icon.png" width="128" alt="Peristyle" />
+</p>
+
+<h1 align="center">Peristyle</h1>
+
+<p align="center"><em>Your personal sanctuary on the web.</em></p>
 
 A personal browser start page for Chrome and Edge. Replaces the new tab page with a clean, dark glassmorphic dashboard — your sites, search, clock, weather, and nothing else.
 
-![Version](https://img.shields.io/badge/version-1.4-blue) ![Manifest V3](https://img.shields.io/badge/Manifest-V3-green) ![Chrome](https://img.shields.io/badge/Chrome-supported-yellow) ![Edge](https://img.shields.io/badge/Edge-supported-blue)
+![Version](https://img.shields.io/badge/version-1.5-blue) ![Manifest V3](https://img.shields.io/badge/Manifest-V3-green) ![Chrome](https://img.shields.io/badge/Chrome-supported-yellow) ![Edge](https://img.shields.io/badge/Edge-supported-blue)
 
 ---
 
@@ -23,16 +29,16 @@ A personal browser start page for Chrome and Edge. Replaces the new tab page wit
 
 ## Installation
 
-Launcher is a sideloaded extension — it is not on the Chrome Web Store.
+Peristyle is a sideloaded extension — it is not on the Chrome Web Store.
 
 ### First time setup
 
-1. [Download the latest release](https://github.com/CNCow/Launcher/archive/refs/heads/main.zip) as a ZIP
+1. [Download the latest release](https://github.com/CNCow/Peristyle/archive/refs/heads/main.zip) as a ZIP
 2. Extract the ZIP to a folder on your machine (somewhere permanent — the browser needs to keep pointing at it)
 3. Open Chrome or Edge and go to `chrome://extensions` or `edge://extensions`
 4. Enable **Developer mode** (toggle in the top-right corner)
 5. Click **Load unpacked** and select the extracted folder
-6. Open a new tab — Launcher will appear with a set of sample tiles to get you started
+6. Open a new tab — Peristyle will appear with a set of sample tiles to get you started
 
 ### Updating to a new version
 
@@ -41,7 +47,7 @@ When a new version is available, a small red badge will appear on the settings i
 1. Open Settings and go to the **Updates** tab
 2. Click **Download latest version** — this downloads a fresh ZIP from GitHub
 3. Extract the ZIP and **replace the contents** of your existing extension folder with the new files
-4. Go to `chrome://extensions` and click the **reload** button (↺) on the Launcher card
+4. Go to `chrome://extensions` and click the **reload** button (↺) on the Peristyle card
 5. Open a new tab — done
 
 > **Tip:** If you store the extension folder in a synced location (OneDrive, Dropbox, etc.) you only need to update it once and all your machines will pick up the changes after a browser restart.
@@ -52,7 +58,7 @@ When a new version is available, a small red badge will appear on the settings i
 
 All your settings — tiles, groups, theme, weather location — are stored in your browser's `localStorage` automatically as you make changes. Nothing is shared or synced anywhere.
 
-On a fresh install, Launcher starts with a set of built-in sample tiles. From there, set it up the way you like and use the export/import buttons to manage your own config:
+On a fresh install, Peristyle starts with a set of built-in sample tiles. From there, set it up the way you like and use the export/import buttons to manage your own config:
 
 - Click the **download** icon in the action bar (bottom-right) to save your current config as `config.json`
 - Click the **upload** icon to restore a previously saved config on a new machine
@@ -65,7 +71,7 @@ On a fresh install, Launcher starts with a set of built-in sample tiles. From th
 
 | Tab | What's in there |
 |---|---|
-| **General** | Launcher name, show/hide title, link target (same or new tab), tutorial |
+| **General** | Peristyle name, show/hide title, link target (same or new tab), tutorial |
 | **Appearance** | Colour theme, accent colour, font pairing, clock style, icon size, tile opacity & blur |
 | **Background** | Built-in presets, daily Bing photo, custom URL, pinned images |
 | **Weather** | Enable widget, search for your location, save coordinates |
@@ -100,10 +106,10 @@ On a fresh install, Launcher starts with a set of built-in sample tiles. From th
 ## File structure
 
 ```
-Launcher/
+Peristyle/
 ├── manifest.json       # Extension manifest (Manifest V3)
-├── launcher.html       # Main page — markup and styles
-├── launcher.js         # All logic — state, rendering, settings, weather, updates
+├── peristyle.html      # Main page — markup and styles
+├── peristyle.js        # All logic — state, rendering, settings, weather, updates
 ├── images/             # Any local custom tile icons (optional)
 └── README.md
 ```
