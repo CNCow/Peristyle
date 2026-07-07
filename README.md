@@ -8,7 +8,7 @@
 
 A personal browser start page for Chrome and Edge. Replaces the new tab page with a clean, dark glassmorphic dashboard — your sites, search, clock, weather, and nothing else.
 
-![Version](https://img.shields.io/badge/version-1.5-blue) ![Manifest V3](https://img.shields.io/badge/Manifest-V3-green) ![Chrome](https://img.shields.io/badge/Chrome-supported-yellow) ![Edge](https://img.shields.io/badge/Edge-supported-blue)
+![Version](https://img.shields.io/badge/version-1.6-blue) ![Manifest V3](https://img.shields.io/badge/Manifest-V3-green) ![Chrome](https://img.shields.io/badge/Chrome-supported-yellow) ![Edge](https://img.shields.io/badge/Edge-supported-blue)
 
 ---
 
@@ -18,12 +18,13 @@ A personal browser start page for Chrome and Edge. Replaces the new tab page wit
 - **Live clock & date** — always front and centre
 - **Weather widget** — current conditions, feels like, wind, rain chance, and a 7-day forecast popup (powered by Open-Meteo, no API key required)
 - **Theming** — 8 colour themes, custom accent colour, 6 font pairings, clock style options, tile opacity and blur sliders
-- **Backgrounds** — built-in presets, custom image URL, pin your own images, or use the daily Bing photo automatically
-- **Search** — Google search bar, press `/` anywhere to focus it
+- **Backgrounds** — built-in presets (including the default Peristyle image), custom image URL, pin your own images, or use the daily Bing photo automatically
+- **Search** — configurable search engine (Google, Bing, DuckDuckGo, Ecosia, Brave); press `/` anywhere to focus
 - **Edit mode** — press `E` or click the pencil icon; drag tiles between groups, rename groups, reorder groups
 - **Backup & restore** — export your personal config as a `config.json` file and import it back on any machine
 - **Update checker** — checks GitHub for a newer version on load; shows a badge on the settings icon when an update is available
 - **First-run tutorial** — 8-step guided tour; can be replayed from Settings → General
+- **About** — Settings → About explains what a peristyle is and how the name connects to the extension
 
 ---
 
@@ -71,12 +72,13 @@ On a fresh install, Peristyle starts with a set of built-in sample tiles. From t
 
 | Tab | What's in there |
 |---|---|
-| **General** | Peristyle name, show/hide title, link target (same or new tab), tutorial |
+| **General** | Peristyle name, show/hide title, search engine, link target (same or new tab), tutorial |
 | **Appearance** | Colour theme, accent colour, font pairing, clock style, icon size, tile opacity & blur |
-| **Background** | Built-in presets, daily Bing photo, custom URL, pinned images |
+| **Background** | Built-in presets (including default Peristyle image), daily Bing photo, custom URL, pinned images |
 | **Weather** | Enable widget, search for your location, save coordinates |
 | **Groups** | Add, rename, reorder, and delete groups |
 | **Updates** | Current version, latest version, check now, download |
+| **About** | What a peristyle is, version info, GitHub link |
 
 ---
 
@@ -107,10 +109,11 @@ On a fresh install, Peristyle starts with a set of built-in sample tiles. From t
 
 ```
 Peristyle/
-├── manifest.json       # Extension manifest (Manifest V3)
-├── peristyle.html      # Main page — markup and styles
-├── peristyle.js        # All logic — state, rendering, settings, weather, updates
-├── images/             # Any local custom tile icons (optional)
+├── manifest.json              # Extension manifest (Manifest V3)
+├── peristyle.html             # Main page — markup and styles
+├── peristyle.js               # All logic — state, rendering, settings, weather, updates
+├── images/
+│   └── peristyle-default.jpg  # Default background (AI-generated peristyle courtyard)
 └── README.md
 ```
 

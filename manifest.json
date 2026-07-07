@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Peristyle",
-  "version": "1.5",
+  "version": "1.6",
   "description": "Your personal sanctuary on the web.",
   "chrome_url_overrides": { "newtab": "peristyle.html" },
   "web_accessible_resources": [

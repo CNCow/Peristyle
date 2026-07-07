@@ -5,9 +5,10 @@ function $(id) { return document.getElementById(id); }
 // ── Defaults ───────────────────────────────────────────────────────────────
 const DEFAULTS = {
   title: 'Peristyle', showTitle: false,
-  bg: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80',
+  bg: 'images/peristyle-default.jpg',
   linkTarget: '_blank',
   useBingBg: false,
+  searchEngine: 'google',
   pinnedBgs: [],
   tutorialSeen: false,
   theme: {
@@ -41,6 +42,7 @@ let state = JSON.parse(JSON.stringify(DEFAULTS));
 function applyDefaults(s) {
   if (s.showTitle === undefined) s.showTitle = false;
   if (s.linkTarget === undefined) s.linkTarget = '_blank';
+  if (s.searchEngine === undefined) s.searchEngine = 'google';
   if (s.weather === undefined) s.weather = { enabled: false, lat: '', lon: '', tz: 'UTC', locationName: '' };
   if (s.pinnedBgs === undefined) s.pinnedBgs = [];
   if (s.tutorialSeen === undefined) s.tutorialSeen = false;
@@ -155,6 +157,25 @@ function refreshUpdatePanel() {
     statusEl.className   = 'update-status-msg ok';
     if (downloadBtn) downloadBtn.style.display = 'none';
   }
+}
+
+// ── Search engines ──────────────────────────────────────────────────────────
+const SEARCH_ENGINES = {
+  google:     { name: 'Google',     url: 'https://www.google.com/search?q=' },
+  bing:       { name: 'Bing',       url: 'https://www.bing.com/search?q=' },
+  duckduckgo: { name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=' },
+  ecosia:     { name: 'Ecosia',     url: 'https://www.ecosia.org/search?q=' },
+  brave:      { name: 'Brave',      url: 'https://search.brave.com/search?q=' },
+};
+
+function currentSearchEngine() {
+  return SEARCH_ENGINES[state.searchEngine] || SEARCH_ENGINES.google;
+}
+
+function updateSearchPlaceholder() {
+  const el = $('search');
+  if (!el) return;
+  el.placeholder = 'Search ' + currentSearchEngine().name + '… (press /)';
 }
 
 // ── Theme Engine ───────────────────────────────────────────────────────────
@@ -280,7 +301,7 @@ const TUTORIAL_STEPS = [
   {
     target: '#search',
     title: 'Search the web',
-    body: 'Type here and press Enter to search Google. Press <kbd>/</kbd> anywhere on the page to jump straight to this box.',
+    body: 'Type here and press Enter to search. Press <kbd>/</kbd> anywhere on the page to jump straight to this box. You can change your preferred search engine in Settings → General.',
     position: 'bottom',
   },
   {
@@ -449,8 +470,11 @@ function adjustGroupsOffset() {
   groups.style.marginTop = Math.max(blockBottom - appTop + gap, 20) + 'px';
 }
 
+const CONFIG_STORAGE_KEY = 'peristyle_config';
+const LEGACY_CONFIG_STORAGE_KEY = 'launcher_config'; // pre-rebrand key, kept only for one-time migration
+
 function persist() {
-  localStorage.setItem('launcher_config', JSON.stringify(state));
+  localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(state));
 }
 
 function saveConfig() {
@@ -478,6 +502,7 @@ function importConfig(file) {
       persist();
       render();
       applyWeatherVisibility();
+      updateSearchPlaceholder();
       const btn = $('btn-import-config');
       const iconSpan = btn.querySelector('.material-symbols-rounded');
       if (iconSpan) {
@@ -494,7 +519,18 @@ function importConfig(file) {
 
 async function loadConfig() {
   try {
-    const cached = localStorage.getItem('launcher_config');
+    let cached = localStorage.getItem(CONFIG_STORAGE_KEY);
+
+    // One-time migration from the pre-rebrand "Launcher" storage key
+    if (!cached) {
+      const legacy = localStorage.getItem(LEGACY_CONFIG_STORAGE_KEY);
+      if (legacy) {
+        cached = legacy;
+        localStorage.setItem(CONFIG_STORAGE_KEY, legacy);
+        localStorage.removeItem(LEGACY_CONFIG_STORAGE_KEY);
+      }
+    }
+
     if (cached) {
       state = applyDefaults(JSON.parse(cached));
       return;
@@ -721,6 +757,7 @@ setInterval(tick, 1000); tick();
 
 // ── Background ─────────────────────────────────────────────────────────────
 const BG_PRESETS = [
+  { label:'Peristyle', url:'images/peristyle-default.jpg', thumb:'images/peristyle-default.jpg' },
   { label:'Mountains', url:'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80', thumb:'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=120&q=60' },
   { label:'Forest',    url:'https://images.unsplash.com/photo-1448375240586-882707db888b?w=1600&q=80', thumb:'https://images.unsplash.com/photo-1448375240586-882707db888b?w=120&q=60' },
   { label:'Ocean',     url:'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1600&q=80', thumb:'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=120&q=60' },
@@ -810,6 +847,7 @@ let editMode = false;
 function render() {
   applyTitleVisibility();
   applyTheme();
+  updateSearchPlaceholder();
 
   if ($('toggle-bing-bg')) $('toggle-bing-bg').checked = !!state.useBingBg;
   if ($('manual-bg-section')) $('manual-bg-section').style.display = state.useBingBg ? 'none' : 'block';
@@ -1143,6 +1181,7 @@ function openSettings() {
   $('title-edit-row').style.display = state.showTitle ? 'block' : 'none';
   $('toggle-link-target').checked = (state.linkTarget === '_self');
   $('toggle-tutorial').checked = !state.tutorialSeen;
+  if ($('search-engine-select')) $('search-engine-select').value = state.searchEngine || 'google';
 
   const wEnabled = state.weather && state.weather.enabled;
   $('toggle-weather').checked = wEnabled;
@@ -1158,6 +1197,7 @@ function openSettings() {
   renderPinnedBgs();
   syncThemeUI();
   refreshUpdatePanel();
+  if ($('about-version')) $('about-version').textContent = getCurrentVersion();
 
   // Always open on General tab
   document.querySelectorAll('.settings-nav-btn').forEach(b => b.classList.remove('active'));
@@ -1180,6 +1220,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   render();
   applyTheme();
   applyWeatherVisibility();
+  updateSearchPlaceholder();
   maybeStartTutorial();
 
   // Silent update check on load
@@ -1243,6 +1284,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     closeModal('settings-modal');
     setTimeout(startTutorial, 200);
   });
+  if ($('search-engine-select')) {
+    $('search-engine-select').addEventListener('change', e => {
+      state.searchEngine = e.target.value;
+      persist();
+      updateSearchPlaceholder();
+    });
+  }
   $('btn-add-group').addEventListener('click', addGroup);
   $('new-group-name').addEventListener('keydown', e => { if (e.key === 'Enter') addGroup(); });
   $('toggle-weather').addEventListener('change', e => {
@@ -1320,7 +1368,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Search
   $('search').addEventListener('keydown', e => {
-    if (e.key === 'Enter') { const q = e.target.value.trim(); if (q) window.open('https://www.google.com/search?q=' + encodeURIComponent(q), state.linkTarget || '_blank'); }
+    if (e.key === 'Enter') {
+      const q = e.target.value.trim();
+      if (q) {
+        const engine = currentSearchEngine();
+        window.open(engine.url + encodeURIComponent(q), state.linkTarget || '_blank');
+      }
+    }
   });
 
   // Theme — color themes

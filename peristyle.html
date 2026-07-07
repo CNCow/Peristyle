@@ -405,6 +405,21 @@
   .update-instructions li { margin-bottom: 0.25rem; }
   .update-instructions code { background: rgba(255,255,255,0.08); border-radius: 4px; padding: 1px 5px; font-size: 0.75rem; color: var(--accent); }
 
+  /* ── About panel ── */
+  .about-header { display: flex; align-items: center; gap: 14px; margin-bottom: 1.2rem; }
+  .about-icon { width: 48px; height: 48px; border-radius: 12px; background: var(--accent-dim); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .about-icon .material-symbols-rounded { font-size: 26px; color: var(--accent); }
+  .about-name { font-family: var(--font-display); font-size: 1.3rem; color: #fff; line-height: 1.2; }
+  .about-tagline { font-size: 0.8rem; color: rgba(255,255,255,0.45); font-style: italic; margin-top: 2px; }
+  .about-body p { font-size: 0.85rem; line-height: 1.7; color: rgba(255,255,255,0.65); margin-bottom: 0.9rem; }
+  .about-body strong { color: rgba(255,255,255,0.85); font-weight: 600; }
+  .about-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 1.2rem; }
+  .about-meta-item { font-size: 0.72rem; color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 100px; padding: 0.3rem 0.8rem; }
+  .about-meta-item strong { color: rgba(255,255,255,0.7); }
+  .about-link { display: inline-flex; align-items: center; gap: 5px; color: var(--accent); font-size: 0.82rem; text-decoration: none; margin-top: 1rem; }
+  .about-link:hover { text-decoration: underline; }
+  .about-link .material-symbols-rounded { font-size: 1rem; }
+
   /* ── Tutorial overlay ── */
   #tutorial-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.72); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
   #tutorial-overlay.visible { display: block; }
@@ -431,7 +446,7 @@
 
 <div id="bg"></div>
 <button id="site-title">Peristyle</button>
-<input id="search" placeholder="Search Google… (press /)" autocomplete="off" />
+<input id="search" placeholder="Search the web… (press /)" autocomplete="off" />
 
 <div id="app">
   <div id="clock-weather-block">
@@ -537,6 +552,9 @@
         <span class="material-symbols-rounded">system_update_alt</span> Updates
         <span class="nav-update-dot" id="nav-update-dot"></span>
       </button>
+      <button class="settings-nav-btn" data-tab="about">
+        <span class="material-symbols-rounded">account_balance</span> About
+      </button>
       <div class="settings-nav-footer">
         <button class="btn btn-ghost" id="settings-close" style="width:100%;font-size:0.82rem;">Close</button>
       </div>
@@ -565,6 +583,17 @@
           <div id="title-edit-row" style="display:none;margin-top:0.5rem">
             <p style="font-size:0.78rem;color:rgba(255,255,255,0.35);margin-bottom:0;">Displays the Peristyle name in the top-left corner.</p>
           </div>
+        </div>
+        <hr class="form-divider" />
+        <div class="form-group">
+          <label>Search engine</label>
+          <select id="search-engine-select">
+            <option value="google">Google</option>
+            <option value="bing">Bing</option>
+            <option value="duckduckgo">DuckDuckGo</option>
+            <option value="ecosia">Ecosia</option>
+            <option value="brave">Brave</option>
+          </select>
         </div>
         <hr class="form-divider" />
         <div class="form-group">
@@ -813,6 +842,35 @@
             <li>Open a new tab — done!</li>
           </ol>
         </div>
+      </div>
+
+      <!-- ABOUT -->
+      <div class="settings-panel" data-panel="about">
+        <div class="panel-heading">About</div>
+
+        <div class="about-header">
+          <div class="about-icon"><span class="material-symbols-rounded">account_balance</span></div>
+          <div>
+            <div class="about-name">Peristyle</div>
+            <div class="about-tagline">Your personal sanctuary on the web.</div>
+          </div>
+        </div>
+
+        <div class="about-body">
+          <p>In ancient Greek and Roman architecture, a <strong>peristyle</strong> was an open courtyard within a home, surrounded on all sides by a colonnade — a private, columned space kept apart from the noise of the street outside. It was where a household actually lived: airy, quiet, and entirely their own.</p>
+          <p>Every new tab works the same way. The default browser new tab page is public space — full of shortcuts, ads, and other people's priorities. Peristyle replaces it with a courtyard built around what actually matters to you: your own sites, your own layout, your own quiet corner of the screen before you step back out into the wider web.</p>
+          <p>The columns are just a nice way of putting it — the point is the room they make.</p>
+        </div>
+
+        <div class="about-meta">
+          <span class="about-meta-item">Version <strong id="about-version">1.6</strong></span>
+          <span class="about-meta-item">Manifest V3</span>
+          <span class="about-meta-item">GPL-3.0</span>
+        </div>
+
+        <a class="about-link" href="https://github.com/CNCow/Peristyle" target="_blank" rel="noopener">
+          <span class="material-symbols-rounded">open_in_new</span> View on GitHub
+        </a>
       </div>
 
     </div><!-- end .settings-panels -->
